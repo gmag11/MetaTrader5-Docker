@@ -3,7 +3,7 @@
 # Configuration variables
 mt5file='/config/.wine/drive_c/Program Files/MetaTrader 5/terminal64.exe'
 WINEPREFIX='/config/.wine'
-WINEDEBUG='-all'
+export WINEDEBUG='-all'
 wine_executable="wine"
 metatrader_version="5.0.36"
 mt5server_port="8001"
@@ -60,6 +60,10 @@ else
 
     # Set Windows 10 mode in Wine and download and install MT5
     $wine_executable reg add "HKEY_CURRENT_USER\\Software\\Wine" /v Version /t REG_SZ /d "win10" /f
+    # Disable Wine's JIT debugger (winedbg) so MT5's anti-debug check doesn't trigger
+    $wine_executable reg add "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Debugger /t REG_SZ /d "" /f
+    $wine_executable reg add "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Auto /t REG_SZ /d "0" /f
+    pkill -f winedbg 2>/dev/null || true
     show_message "[3/7] Downloading MT5 installer..."
     curl -o /config/.wine/drive_c/mt5setup.exe $mt5setup_url
     show_message "[3/7] Installing MetaTrader 5..."

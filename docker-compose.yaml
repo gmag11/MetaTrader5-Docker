@@ -10,4 +10,12 @@ services:
       - 8001:8001
     env_file:
       - .env
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 6G
+        reservations:
+          cpus: '2'
+          memory: 2G
 
