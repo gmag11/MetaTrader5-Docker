@@ -72,7 +72,7 @@ version: '3'
 
 services:
   mt5:
-    image: gmag11/metatrader5_vnc
+    image: zeus1999/metatrader5_vnc
     container_name: mt5
     volumes:
       - ./config:/config
@@ -87,7 +87,7 @@ services:
 **Notice**: If you do not need to do remote python programming you can get a much smaller installation changing this line:
 
 ```yaml
-image: gmag11/metatrader5_vnc
+image: zeus1999/metatrader5_vnc
 ```
 
 by this one
@@ -104,7 +104,7 @@ image: gmag11/metatrader5_vnc:1.1
 version: '3'
 services:
   mt5:
-    image: gmag11/metatrader5_vnc
+    image: zeus1999/metatrader5_vnc
     container_name: mt5
     volumes:
       - mt5_config:/config
