@@ -3,7 +3,7 @@
 # Configuration variables
 mt5file='/config/.wine/drive_c/Program Files/MetaTrader 5/terminal64.exe'
 WINEPREFIX='/config/.wine'
-WINEDEBUG='-all'
+export WINEDEBUG='-all'
 wine_executable="wine"
 metatrader_version="5.0.36"
 mt5server_port="8001"
@@ -60,6 +60,10 @@ else
 
     # Set Windows 10 mode in Wine and download and install MT5
     $wine_executable reg add "HKEY_CURRENT_USER\\Software\\Wine" /v Version /t REG_SZ /d "win10" /f
+    # Disable Wine's JIT debugger (winedbg) so MT5's anti-debug check doesn't trigger
+    $wine_executable reg add "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Debugger /t REG_SZ /d "" /f
+    $wine_executable reg add "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" /v Auto /t REG_SZ /d "0" /f
+    pkill -f winedbg 2>/dev/null || true
     show_message "[3/7] Downloading MT5 installer..."
     curl -o /config/.wine/drive_c/mt5setup.exe $mt5setup_url
     show_message "[3/7] Installing MetaTrader 5..."
@@ -96,10 +100,10 @@ show_message "[6/7] Installing MetaTrader5 library in Windows"
 if ! is_wine_python_package_installed "MetaTrader5==$metatrader_version"; then
     $wine_executable python -m pip install --no-cache-dir MetaTrader5==$metatrader_version
 fi
-# Install mt5linux library in Windows if not installed
+# Install mt5linux library in Windows (pinned: upstream >=0.2 removed the -w switch)
 show_message "[6/7] Checking and installing mt5linux library in Windows if necessary"
-if ! is_wine_python_package_installed "mt5linux"; then
-    $wine_executable python -m pip install --no-cache-dir "mt5linux>=0.1.9"
+if ! is_wine_python_package_installed "mt5linux==0.1.9"; then
+    $wine_executable python -m pip install --no-cache-dir --force-reinstall "mt5linux==0.1.9"
 fi
 
 # Install python-dateutil if needed (datetime is built-in, but dateutil adds features)
@@ -108,10 +112,10 @@ if ! is_wine_python_package_installed "python-dateutil"; then
     $wine_executable python -m pip install --no-cache-dir python-dateutil
 fi
 
-# Install mt5linux library in Linux if not installed
+# Install mt5linux library in Linux (pinned: upstream >=0.2 removed the -w switch)
 show_message "[6/7] Checking and installing mt5linux library in Linux if necessary"
-if ! is_python_package_installed "mt5linux"; then
-    pip install --break-system-packages --no-cache-dir --no-deps mt5linux && \
+if ! is_python_package_installed "mt5linux==0.1.9"; then
+    pip install --break-system-packages --no-cache-dir --no-deps --force-reinstall "mt5linux==0.1.9" && \
     pip install --break-system-packages --no-cache-dir rpyc plumbum numpy
 fi
 
