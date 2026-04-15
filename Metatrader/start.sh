@@ -100,10 +100,10 @@ show_message "[6/7] Installing MetaTrader5 library in Windows"
 if ! is_wine_python_package_installed "MetaTrader5==$metatrader_version"; then
     $wine_executable python -m pip install --no-cache-dir MetaTrader5==$metatrader_version
 fi
-# Install mt5linux library in Windows if not installed
+# Install mt5linux library in Windows (pinned: upstream >=0.2 removed the -w switch)
 show_message "[6/7] Checking and installing mt5linux library in Windows if necessary"
-if ! is_wine_python_package_installed "mt5linux"; then
-    $wine_executable python -m pip install --no-cache-dir "mt5linux>=0.1.9"
+if ! is_wine_python_package_installed "mt5linux==0.1.9"; then
+    $wine_executable python -m pip install --no-cache-dir --force-reinstall "mt5linux==0.1.9"
 fi
 
 # Install python-dateutil if needed (datetime is built-in, but dateutil adds features)
@@ -112,10 +112,10 @@ if ! is_wine_python_package_installed "python-dateutil"; then
     $wine_executable python -m pip install --no-cache-dir python-dateutil
 fi
 
-# Install mt5linux library in Linux if not installed
+# Install mt5linux library in Linux (pinned: upstream >=0.2 removed the -w switch)
 show_message "[6/7] Checking and installing mt5linux library in Linux if necessary"
-if ! is_python_package_installed "mt5linux"; then
-    pip install --break-system-packages --no-cache-dir --no-deps mt5linux && \
+if ! is_python_package_installed "mt5linux==0.1.9"; then
+    pip install --break-system-packages --no-cache-dir --no-deps --force-reinstall "mt5linux==0.1.9" && \
     pip install --break-system-packages --no-cache-dir rpyc plumbum numpy
 fi
 

@@ -1,21 +1,27 @@
+networks:
+  mt5_net:
+    name: mt5_net
+
 services:
   mt5:
-    build: .
-    image: gmag11/metatrader5_vnc
+    image: gmag11/metatrader5_vnc:latest
     container_name: mt5
     volumes:
       - ./config:/config
+      - ./Metatrader/start.sh:/Metatrader/start.sh:ro
     ports:
-      - 3000:3000
-      - 8001:8001
+      - 127.0.0.1:3000:3000
+      - 127.0.0.1:8001:8001
     env_file:
       - .env
+    networks:
+      - mt5_net
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 6G
+          cpus: '1.5'
+          memory: 4G
         reservations:
-          cpus: '2'
-          memory: 2G
+          cpus: '0.5'
+          memory: 1G
 
