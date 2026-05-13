@@ -123,7 +123,7 @@ fi
 
 # Start the MT5 server on Linux
 show_message "[7/7] Starting the mt5linux server..."
-python3 -m mt5linux --host 0.0.0.0 -p $mt5server_port -w $wine_executable python.exe &
+$wine_executable python -m mt5linux --host 0.0.0.0 -p "$mt5server_port" &
 
 # Give the server some time to start
 sleep 5
