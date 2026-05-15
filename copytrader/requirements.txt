@@ -1,0 +1,17 @@
+# Core MT5 library (install first, has strict dependencies)
+mt5linux
+
+# Async and networking
+rpyc
+aiosqlite
+
+# Web framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Configuration and utilities
+pyyaml
+structlog
+python-dotenv

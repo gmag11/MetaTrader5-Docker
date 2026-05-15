@@ -1,0 +1,152 @@
+# CopyTrader Configuration Example
+# Copy this file to copytrader.yaml and modify as needed
+
+# ============================================================
+# MASTER ACCOUNT
+# ============================================================
+# The master account is the source of trades to be copied
+master:
+  name: "master"
+  host: "mt5-master"  # Docker service name or IP address
+  port: 8001          # RPyC server port
+
+# ============================================================
+# SLAVE ACCOUNTS
+# ============================================================
+# Add as many slave accounts as needed
+slaves:
+  # --------------------------------------------------------
+  # EXAMPLE 1: Proportional lot sizing
+  # --------------------------------------------------------
+  # Copies trades with lot size proportional to balance ratio
+  # If master has $10,000 and slave has $5,000, slave gets 50% lot
+  - name: "slave1"
+    host: "mt5-slave1"
+    port: 8001
+    enabled: true
+    lot_mode: "proportional"
+    lot_value: 10000        # Master's balance for calculation
+    max_lot: 5.0
+    min_lot: 0.01
+    symbols_filter: null    # Copy all symbols
+    magic_number: 100001
+    invert_trades: false
+    max_slippage: 20
+
+  # --------------------------------------------------------
+  # EXAMPLE 2: Fixed multiplier
+  # --------------------------------------------------------
+  # Always trades at 50% of master's lot size
+  - name: "slave2"
+    host: "mt5-slave2"
+    port: 8001
+    enabled: true
+    lot_mode: "multiplier"
+    lot_value: 0.5          # 50% of master lot
+    max_lot: 2.0
+    min_lot: 0.01
+    symbols_filter: null
+    magic_number: 100002
+    invert_trades: false
+    max_slippage: 20
+
+  # --------------------------------------------------------
+  # EXAMPLE 3: Fixed lot size
+  # --------------------------------------------------------
+  # Always trades 0.1 lot regardless of master's lot
+  - name: "slave3"
+    host: "mt5-slave3"
+    port: 8001
+    enabled: true
+    lot_mode: "fixed"
+    lot_value: 0.1          # Always 0.1 lot
+    max_lot: 0.5
+    min_lot: 0.01
+    symbols_filter:         # Only copy these symbols
+      - "EURUSD"
+      - "GBPUSD"
+    magic_number: 100003
+    invert_trades: false
+    max_slippage: 20
+
+  # --------------------------------------------------------
+  # EXAMPLE 4: Exact copy
+  # --------------------------------------------------------
+  # Copies exact lot size from master
+  - name: "slave4"
+    host: "mt5-slave4"
+    port: 8001
+    enabled: true
+    lot_mode: "exact"
+    lot_value: 0            # Ignored for exact mode
+    max_lot: 10.0
+    min_lot: 0.01
+    symbols_filter: null
+    magic_number: 100004
+    invert_trades: false
+    max_slippage: 20
+
+  # --------------------------------------------------------
+  # EXAMPLE 5: Inverse/Hedge account
+  # --------------------------------------------------------
+  # Opens opposite trades (BUY becomes SELL and vice versa)
+  - name: "hedge-account"
+    host: "mt5-hedge"
+    port: 8001
+    enabled: true
+    lot_mode: "exact"
+    lot_value: 0
+    max_lot: 10.0
+    min_lot: 0.01
+    symbols_filter: null
+    magic_number: 100005
+    invert_trades: true     # INVERTS trade direction!
+    max_slippage: 20
+
+# ============================================================
+# GLOBAL SETTINGS
+# ============================================================
+settings:
+  # How often to check master for position changes (ms)
+  polling_interval_ms: 500
+
+  # Retry configuration for failed operations
+  retry_attempts: 3
+  retry_delay_ms: 1000
+
+  # Connection settings
+  connection_timeout_ms: 5000
+  heartbeat_interval_ms: 10000
+
+# ============================================================
+# DATABASE
+# ============================================================
+database:
+  # SQLite (default, simple setup)
+  type: "sqlite"
+  path: "/app/data/copytrader.db"
+
+  # PostgreSQL (for production/high availability)
+  # type: "postgres"
+  # host: "postgres"
+  # port: 5432
+  # user: "copytrader"
+  # password: "your_secure_password"
+  # database: "copytrader"
+
+# ============================================================
+# API SERVER
+# ============================================================
+api:
+  host: "0.0.0.0"
+  port: 8080
+
+# ============================================================
+# LOGGING
+# ============================================================
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # Output format: json (for production) or text (for development)
+  format: "json"

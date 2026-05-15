@@ -1,4 +1,9 @@
 
 .devcontainer/
 .env
-config/
+/config/
+
+# CopyTrader - only ignore real config, not examples
+copytrader/config/copytrader.yaml
+*.pyc
+__pycache__/

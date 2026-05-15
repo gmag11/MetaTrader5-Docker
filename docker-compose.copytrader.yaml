@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Master MT5 Account (Weltrade Demo - 19713030)
+  mt5-master:
+    image: gmag11/metatrader5_vnc
+    container_name: mt5-master
+    hostname: mt5-master
+    networks:
+      - copytrader-net
+    volumes:
+      - master-config:/config
+    ports:
+      - "3100:3000"      # VNC web access (Master)
+    environment:
+      - CUSTOM_USER=${MASTER_USER:-admin}
+      - PASSWORD=${MASTER_PASSWORD:-admin}
+      - MT5_PORTABLE=true
+      - MT5_LOGIN=19713030
+      - MT5_PASSWORD=Nu&5V+h2
+      - MT5_SERVER=Weltrade-Demo
+    restart: unless-stopped
+
+  # Slave MT5 Account 1 (Weltrade Demo - 19713032)
+  mt5-slave1:
+    image: gmag11/metatrader5_vnc
+    container_name: mt5-slave1
+    hostname: mt5-slave1
+    networks:
+      - copytrader-net
+    volumes:
+      - slave1-config:/config
+    ports:
+      - "3101:3000"      # VNC web access (Slave1)
+    environment:
+      - CUSTOM_USER=${SLAVE1_USER:-admin}
+      - PASSWORD=${SLAVE1_PASSWORD:-admin}
+      - MT5_LOGIN=19713032
+      - MT5_PASSWORD=+8zHS&5u
+      - MT5_SERVER=Weltrade-Demo
+    restart: unless-stopped
+
+  # Slave MT5 Account 2 (optional - uncomment to use)
+  # mt5-slave2:
+  #   image: gmag11/metatrader5_vnc
+  #   container_name: mt5-slave2
+  #   hostname: mt5-slave2
+  #   networks:
+  #     - copytrader-net
+  #   volumes:
+  #     - slave2-config:/config
+  #   ports:
+  #     - "3002:3000"
+  #   environment:
+  #     - CUSTOM_USER=${SLAVE2_USER:-admin}
+  #     - PASSWORD=${SLAVE2_PASSWORD:-admin}
+  #   restart: unless-stopped
+
+  # CopyTrader Orchestrator Service
+  copytrader:
+    build:
+      context: ./copytrader
+      dockerfile: Dockerfile
+    container_name: copytrader
+    hostname: copytrader
+    networks:
+      - copytrader-net
+    volumes:
+      - copytrader-data:/app/data
+      - ./copytrader/config:/app/config:ro
+    ports:
+      - "8180:8080"      # REST API for monitoring/config
+    environment:
+      - CONFIG_PATH=/app/config/copytrader.yaml
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_PATH=/app/data/copytrader.db
+    depends_on:
+      - mt5-master
+      - mt5-slave1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  copytrader-net:
+    driver: bridge
+
+volumes:
+  master-config:
+  slave1-config:
+  slave2-config:
+  copytrader-data:
