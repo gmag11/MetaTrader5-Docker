@@ -155,7 +155,7 @@ You can access MetaEditor program clicking in `IDE` button in MetaTrader5 interf
 
 You need to install [mt5linux library](https://github.com/lucas-campagna/mt5linux) in your Python host. It may be in any OS, not only Linux.
 
-This is a simple snippet to run your Python script fron any host
+This is a simple snippet to run your Python script from any host
 
 ```python
 from mt5linux import MetaTrader5
@@ -178,6 +178,50 @@ True
 (500, 4120, '22 Dec 2023')
 >>>
 ```
+
+### Authenticated Python Access
+
+If token authentication is enabled (`MT5_AUTH_TOKEN` is set), use the provided client wrapper instead:
+
+```python
+# Copy the mt5client.py from the container or use it directly
+from mt5client import MetaTrader5
+mt5 = MetaTrader5(host='host running docker container', port=8001)
+mt5.initialize()
+print(mt5.version())
+```
+
+You can also specify the token explicitly:
+
+```python
+from mt5client import MetaTrader5
+mt5 = MetaTrader5(host='host running docker container', port=8001, token='your-secret-token')
+mt5.initialize()
+print(mt5.version())
+```
+
+## Authentication
+
+### VNC Web Interface
+
+The KasmVNC web interface (port 3000) uses `CUSTOM_USER` and `PASSWORD` environment variables for authentication. Set these in your `.env` file or docker-compose environment.
+
+### RPyC API Authentication (Recommended)
+
+The mt5linux RPyC server (port 8001) supports optional token-based authentication. When enabled, clients must provide the token before any API calls are accepted. To enable:
+
+1. Set the `MT5_AUTH_TOKEN` environment variable to a secure random token:
+   ```bash
+   # Generate a secure token
+   openssl rand -hex 32
+   ```
+
+2. Add it to your `.env` file:
+   ```env
+   MT5_AUTH_TOKEN=<your-secure-token>
+   ```
+
+3. When `MT5_AUTH_TOKEN` is empty or unset, authentication is disabled for backward compatibility.
 
 ## Configuration
 

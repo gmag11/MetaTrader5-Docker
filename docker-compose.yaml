@@ -10,4 +10,6 @@ services:
       - 8001:8001
     env_file:
       - .env
+    environment:
+      - MT5_AUTH_TOKEN=${MT5_AUTH_TOKEN:-}
 
