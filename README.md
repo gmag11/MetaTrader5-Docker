@@ -185,7 +185,7 @@ The port configuration can be adjusted as per the instructions in the KasmVNC re
 
 ### mt5linux and RPyC packages
 
-The RPyC server runs in the Wine Python environment, next to the Windows `MetaTrader5` package. By default the container installs `mt5linux>=0.1.9` there only when `mt5linux` is missing, so normal restarts do not depend on PyPI availability or drift package versions. You can override the package specifier with `MT5LINUX_PACKAGE`, and you can optionally install a matching explicit RPyC package with `RPYC_PACKAGE`; setting either override forces an upgrade/install on startup.
+The RPyC server runs in the Wine Python environment, next to the Windows `MetaTrader5` package. By default the container installs `mt5linux>=0.1.9` there only when `mt5linux` is missing, so normal restarts do not depend on PyPI availability or drift package versions. The image also installs WineHQ staging by default because stable builds can trip MetaTrader's installer with `A debugger has been found running in your system...` on first boot. You can override the package specifier with `MT5LINUX_PACKAGE`, and you can optionally install a matching explicit RPyC package with `RPYC_PACKAGE`; setting either override forces an upgrade/install on startup.
 
 This is useful when testing a patched mt5linux build before it is released:
 
@@ -196,6 +196,8 @@ environment:
 ```
 
 Use the same RPyC major version on the remote Python client and in this container. RPyC 5.x clients and 6.x servers are not wire-compatible.
+
+If you are upgrading an existing `/config` volume from an older stable-Wine image and MT5 installation previously failed, start once with a clean Wine prefix (remove `/config/.wine` or use a fresh `/config` volume) so MetaTrader can reinstall under staging.
 
 ### MetaTrader 5 Command Line Options
 
