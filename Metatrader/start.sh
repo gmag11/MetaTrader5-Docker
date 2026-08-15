@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # Configuration variables
-mt5file='/config/.wine/drive_c/Program Files/MetaTrader 5/terminal64.exe'
+mt5file='/config/.wine/drive_c/MT5/terminal64.exe'
 WINEPREFIX='/config/.wine'
 WINEDEBUG='-all'
 wine_executable="wine"
 metatrader_version="5.0.36"
 mt5server_port="8001"
 MT5_CMD_OPTIONS="${MT5_CMD_OPTIONS:-}"
-mono_url="https://dl.winehq.org/wine/wine-mono/10.3.0/wine-mono-10.3.0-x86.msi"
 python_url="https://www.python.org/ftp/python/3.9.13/python-3.9.13.exe"
-mt5setup_url="https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+mt5setup_url="https://download.mql5.com/cdn/web/metaquotes.ltd/mt5/mt5setup.exe"
 
 # Function to display a graphical message
 show_message() {
@@ -41,15 +40,13 @@ is_wine_python_package_installed() {
 check_dependency "curl"
 check_dependency "$wine_executable"
 
-# Install Mono if not present
-if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
-    show_message "[1/7] Downloading and installing Mono..."
-    curl -o /config/.wine/drive_c/mono.msi $mono_url
-    WINEDLLOVERRIDES=mscoree=d $wine_executable msiexec /i /config/.wine/drive_c/mono.msi /qn
-    rm /config/.wine/drive_c/mono.msi
-    show_message "[1/7] Mono installed."
-else
-    show_message "[1/7] Mono is already installed."
+# Initialize the Wine prefix before any install step. The prefix is created
+# lazily by Wine, but the MT5 installer needs drive_c to already exist, so we
+# force its creation here. Disabling mscoree/mshtml prevents Wine from trying
+# to download and install Mono/Gecko, which would otherwise hang headless.
+if [ ! -d "/config/.wine/drive_c" ]; then
+    show_message "[1/7] Initializing Wine prefix..."
+    WINEDLLOVERRIDES="mscoree=,mshtml=" "$wine_executable" wineboot --init
 fi
 
 # Check if MetaTrader 5 is already installed
@@ -59,19 +56,18 @@ else
     show_message "[2/7] File $mt5file is not installed. Installing..."
 
     # Set Windows 10 mode in Wine and download and install MT5
-    $wine_executable reg add "HKEY_CURRENT_USER\\Software\\Wine" /v Version /t REG_SZ /d "win10" /f
+    "$wine_executable" reg add "HKEY_CURRENT_USER\\Software\\Wine" /v Version /t REG_SZ /d "win10" /f
     show_message "[3/7] Downloading MT5 installer..."
-    curl -o /config/.wine/drive_c/mt5setup.exe $mt5setup_url
+    curl -o /config/.wine/drive_c/mt5setup.exe "$mt5setup_url"
     show_message "[3/7] Installing MetaTrader 5..."
-    $wine_executable "/config/.wine/drive_c/mt5setup.exe" "/auto" &
-    wait
+    WINEDLLOVERRIDES="mscoree=" "$wine_executable" /config/.wine/drive_c/mt5setup.exe /auto /path:C:/MT5
     rm -f /config/.wine/drive_c/mt5setup.exe
 fi
 
 # Recheck if MetaTrader 5 is installed
 if [ -e "$mt5file" ]; then
     show_message "[4/7] File $mt5file is installed. Running MT5..."
-    $wine_executable "$mt5file" $MT5_CMD_OPTIONS &
+    "$wine_executable" "C:/MT5/terminal64.exe" /portable $MT5_CMD_OPTIONS &
 else
     show_message "[4/7] File $mt5file is not installed. MT5 cannot be run."
 fi
