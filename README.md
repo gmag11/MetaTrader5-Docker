@@ -140,7 +140,7 @@ On first run it may take a few minutes to get everything installed and running. 
 In the case you want to run your own MQL5 bots inside the container you can find MQL5 folder structure in
 
 ```bash
-config/.wine/drive_c/Program Files/MetaTrader 5/MQL5
+config/.wine/drive_c/MT5/MQL5
 ```
 
 All files that you place there can be accessed from your MetaTrader container without the need to restart anything.
