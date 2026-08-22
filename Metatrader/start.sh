@@ -6,6 +6,7 @@ WINEPREFIX='/config/.wine'
 WINEDEBUG='-all'
 wine_executable="wine"
 metatrader_version="5.0.36"
+mt5linux_version="0.1.9"
 mt5server_port="8001"
 MT5_CMD_OPTIONS="${MT5_CMD_OPTIONS:-}"
 mono_url="https://dl.winehq.org/wine/wine-mono/10.3.0/wine-mono-10.3.0-x86.msi"
@@ -98,8 +99,8 @@ if ! is_wine_python_package_installed "MetaTrader5==$metatrader_version"; then
 fi
 # Install mt5linux library in Windows if not installed
 show_message "[6/7] Checking and installing mt5linux library in Windows if necessary"
-if ! is_wine_python_package_installed "mt5linux"; then
-    $wine_executable python -m pip install --no-cache-dir "mt5linux>=0.1.9"
+if ! is_wine_python_package_installed "mt5linux==$mt5linux_version"; then
+    $wine_executable python -m pip install --no-cache-dir "mt5linux==$mt5linux_version"
 fi
 
 # Install python-dateutil if needed (datetime is built-in, but dateutil adds features)
@@ -108,17 +109,19 @@ if ! is_wine_python_package_installed "python-dateutil"; then
     $wine_executable python -m pip install --no-cache-dir python-dateutil
 fi
 
-# Install mt5linux library in Linux if not installed
+# Install mt5linux library in Linux if not installed. Dependencies are
+# pinned to a validated combination: unpinned installs resolve to new major
+# releases (e.g. numpy 2.x) that break the mt5linux bridge at runtime.
 show_message "[6/7] Checking and installing mt5linux library in Linux if necessary"
-if ! is_python_package_installed "mt5linux"; then
-    pip install --break-system-packages --no-cache-dir --no-deps mt5linux && \
-    pip install --break-system-packages --no-cache-dir rpyc plumbum numpy
+if ! is_python_package_installed "mt5linux==$mt5linux_version"; then
+    pip install --break-system-packages --no-cache-dir --no-deps "mt5linux==$mt5linux_version" && \
+    pip install --break-system-packages --no-cache-dir "rpyc==${RPYC_VERSION:-6.0.1}" "plumbum==${PLUMBUM_VERSION:-1.9.0}" "numpy==${NUMPY_VERSION:-2.2.2}"
 fi
 
 # Install pyxdg library in Linux if not installed
 show_message "[6/7] Checking and installing pyxdg library in Linux if necessary"
-if ! is_python_package_installed "pyxdg"; then
-    pip install --break-system-packages --no-cache-dir pyxdg
+if ! is_python_package_installed "pyxdg==${PYXDG_VERSION:-0.28}"; then
+    pip install --break-system-packages --no-cache-dir "pyxdg==${PYXDG_VERSION:-0.28}"
 fi
 
 # Start the MT5 server on Linux

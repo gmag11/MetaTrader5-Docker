@@ -151,6 +151,20 @@ You can access MetaEditor program clicking in `IDE` button in MetaTrader5 interf
 
 **Metatrader will always be updated automatically to latest version as it does when it is nativelly installed in Windows.**
 
+## Volume permissions
+
+On every boot, the container normalizes `/config` ownership to the user the
+services run as (`abc`, mapped to your `PUID`/`PGID`). This fixes start-up
+failures such as `'/.wine' is not owned by you` or `.cache: Permission denied`
+that happen when the volume was first created by a different host UID — a
+common situation with rootless Podman, or when the bind-mount directory was
+created manually before the first `docker compose up`.
+
+If you copy files into `/config` from the host (EAs, scripts, certificates)
+and get permission errors under rootless Podman, remember that the container
+UID `abc` maps to a different host UID; prefer copying files from inside the
+container (`podman cp`) or aligning `PUID`/`PGID` with your host user.
+
 ## Python programming
 
 You need to install [mt5linux library](https://github.com/lucas-campagna/mt5linux) in your Python host. It may be in any OS, not only Linux.
