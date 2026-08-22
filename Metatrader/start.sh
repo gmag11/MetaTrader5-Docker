@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration variables
-mt5file='/config/.wine/drive_c/Program Files/MetaTrader 5/terminal64.exe'
+mt5file='/config/.wine/drive_c/MT5/terminal64.exe'
 WINEPREFIX='/config/.wine'
 WINEDEBUG='-all'
 wine_executable="wine"
@@ -9,9 +9,12 @@ metatrader_version="5.0.36"
 mt5linux_version="0.1.9"
 mt5server_port="8001"
 MT5_CMD_OPTIONS="${MT5_CMD_OPTIONS:-}"
-mono_url="https://dl.winehq.org/wine/wine-mono/10.3.0/wine-mono-10.3.0-x86.msi"
 python_url="https://www.python.org/ftp/python/3.9.13/python-3.9.13.exe"
-mt5setup_url="https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+# The metaquotes.software.corp CDN serves an installer build whose anti-tamper
+# check misfires under Wine ("A debugger has been found running in your system")
+# and blocks the silent install behind an invisible dialog, hanging the first
+# boot. The metaquotes.ltd CDN variant installs cleanly.
+mt5setup_url="https://download.mql5.com/cdn/web/metaquotes.ltd/mt5/mt5setup.exe"
 
 # Function to display a graphical message
 show_message() {
@@ -42,16 +45,19 @@ is_wine_python_package_installed() {
 check_dependency "curl"
 check_dependency "$wine_executable"
 
-# Install Mono if not present
-if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
-    show_message "[1/7] Downloading and installing Mono..."
-    curl -o /config/.wine/drive_c/mono.msi $mono_url
-    WINEDLLOVERRIDES=mscoree=d $wine_executable msiexec /i /config/.wine/drive_c/mono.msi /qn
-    rm /config/.wine/drive_c/mono.msi
-    show_message "[1/7] Mono installed."
-else
-    show_message "[1/7] Mono is already installed."
+# Initialize the Wine prefix before any install step. The prefix is created
+# lazily by Wine, but the MSI/installer steps below need drive_c to already
+# exist. Initialization runs with mscoree/mshtml disabled so Wine does not
+# try to download its own Mono/Gecko packages on first boot: that download
+# path hangs a headless container waiting for an invisible dialog.
+if [ ! -d "/config/.wine/drive_c" ]; then
+    show_message "[1/7] Initializing Wine prefix..."
+    WINEDLLOVERRIDES="mscoree=,mshtml=" "$wine_executable" wineboot --init
 fi
+
+# MetaQuotes runtime does not need wine-mono: mscoree stays disabled so the
+# MT5 installer's anti-tamper check does not misfire ("A debugger has been
+# found running in your system") and boot never waits on an invisible dialog.
 
 # Check if MetaTrader 5 is already installed
 if [ -e "$mt5file" ]; then
@@ -64,7 +70,7 @@ else
     show_message "[3/7] Downloading MT5 installer..."
     curl -o /config/.wine/drive_c/mt5setup.exe $mt5setup_url
     show_message "[3/7] Installing MetaTrader 5..."
-    $wine_executable "/config/.wine/drive_c/mt5setup.exe" "/auto" &
+    WINEDLLOVERRIDES="mscoree=" $wine_executable "/config/.wine/drive_c/mt5setup.exe" "/auto" "/path:C:/MT5" &
     wait
     rm -f /config/.wine/drive_c/mt5setup.exe
 fi
