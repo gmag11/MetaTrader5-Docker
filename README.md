@@ -140,7 +140,7 @@ On first run it may take a few minutes to get everything installed and running. 
 In the case you want to run your own MQL5 bots inside the container you can find MQL5 folder structure in
 
 ```bash
-config/.wine/drive_c/Program Files/MetaTrader 5/MQL5
+config/.wine/drive_c/MT5/MQL5
 ```
 
 All files that you place there can be accessed from your MetaTrader container without the need to restart anything.
@@ -150,6 +150,20 @@ You can access MetaEditor program clicking in `IDE` button in MetaTrader5 interf
 **Notice**: If you will run MQL5 only bots (without Python) you can run perfectly with gmag11/metatrader5_vnc:1.0 image as pointed before. Remember that **image version is not stuck to a specific MetaTrader 5 version**.
 
 **Metatrader will always be updated automatically to latest version as it does when it is nativelly installed in Windows.**
+
+## Volume permissions
+
+On every boot, the container normalizes `/config` ownership to the user the
+services run as (`abc`, mapped to your `PUID`/`PGID`). This fixes start-up
+failures such as `'/.wine' is not owned by you` or `.cache: Permission denied`
+that happen when the volume was first created by a different host UID — a
+common situation with rootless Podman, or when the bind-mount directory was
+created manually before the first `docker compose up`.
+
+If you copy files into `/config` from the host (EAs, scripts, certificates)
+and get permission errors under rootless Podman, remember that the container
+UID `abc` maps to a different host UID; prefer copying files from inside the
+container (`podman cp`) or aligning `PUID`/`PGID` with your host user.
 
 ## Python programming
 

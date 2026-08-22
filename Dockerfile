@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-kasmvnc:debianbookworm
+FROM --platform=linux/amd64 ghcr.io/linuxserver/baseimage-kasmvnc@sha256:2983093f0359d18934687de0192acfdfbdff879c5f8a52e8a99d94262fba4c2b
 
 # set version label
 ARG BUILD_DATE
