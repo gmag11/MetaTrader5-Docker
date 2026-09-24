@@ -23,7 +23,11 @@ If you just need to run Metatrader for running your MQL5 programs without any Py
 ## Requirements
 
 - Docker installed on your machine.
-- Only intelx86/amd64 host is supported
+- Intel x86/amd64 host, or ARM64 host with a 4K page size kernel (e.g. Raspberry Pi 5). See [Raspberry Pi 5 / ARM64](#raspberry-pi-5--arm64).
+
+## Wine version
+
+The image pins Wine **10.0** on both amd64 and ARM64. Wine 11 makes MetaTrader show *"A debugger has been found running in your system"* and refuse to install or start. You can override the version at build time, e.g. `docker build --build-arg WINE_VERSION=10.0 -t mt5 .`
 
 ## Usage from repository
 
@@ -154,6 +158,15 @@ You can access MetaEditor program clicking in `IDE` button in MetaTrader5 interf
 ## Python programming
 
 You need to install [mt5linux library](https://github.com/lucas-campagna/mt5linux) in your Python host. It may be in any OS, not only Linux.
+
+The server in the container runs mt5linux **0.1.9** with rpyc **5.0.1**, and the client must match. Newer mt5linux releases (1.x) and rpyc 6 fail with protocol errors. Install the client like this:
+
+```bash
+pip install --no-deps mt5linux==0.1.9
+pip install rpyc==5.0.1 plumbum numpy
+```
+
+**Log in to a trade account first.** Until the terminal is logged in (File → Login to Trade Account, or open a demo account), `mt5.initialize()` fails with `(-10005, 'IPC timeout')`. Close any open dialog in the terminal too, because a modal dialog blocks the API.
 
 This is a simple snippet to run your Python script fron any host
 
