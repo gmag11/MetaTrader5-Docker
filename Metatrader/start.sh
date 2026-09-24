@@ -7,9 +7,11 @@ WINEDEBUG='-all'
 wine_executable="wine"
 metatrader_version="5.0.36"
 mt5server_port="8001"
+mt5linux_version="0.1.9"
 MT5_CMD_OPTIONS="${MT5_CMD_OPTIONS:-}"
 mono_url="https://dl.winehq.org/wine/wine-mono/10.3.0/wine-mono-10.3.0-x86.msi"
 python_url="https://www.python.org/ftp/python/3.9.13/python-3.9.13.exe"
+wine_python_exe="/config/.wine/drive_c/Program Files (x86)/Python39-32/python.exe"
 mt5setup_url="https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
 
 # Function to display a graphical message
@@ -41,12 +43,23 @@ is_wine_python_package_installed() {
 check_dependency "curl"
 check_dependency "$wine_executable"
 
+# On ARM64 hosts Wine needs a 4K page size kernel.
+# Raspberry Pi OS on the Pi 5 defaults to a 16K page kernel (kernel_2712.img).
+if [ "$(uname -m)" = "aarch64" ]; then
+    page_size=$(getconf PAGESIZE)
+    if [ "$page_size" != "4096" ]; then
+        show_message "ERROR: Host kernel page size is $page_size bytes. Wine requires 4096."
+        show_message "On Raspberry Pi 5 add 'kernel=kernel8.img' to /boot/firmware/config.txt and reboot."
+        exit 1
+    fi
+fi
+
 # Install Mono if not present
 if [ ! -e "/config/.wine/drive_c/windows/mono" ]; then
     show_message "[1/7] Downloading and installing Mono..."
-    curl -o /config/.wine/drive_c/mono.msi $mono_url
-    WINEDLLOVERRIDES=mscoree=d $wine_executable msiexec /i /config/.wine/drive_c/mono.msi /qn
-    rm /config/.wine/drive_c/mono.msi
+    curl -L -o /tmp/mono.msi $mono_url
+    WINEDLLOVERRIDES=mscoree=d $wine_executable msiexec /i /tmp/mono.msi /qn
+    rm -f /tmp/mono.msi
     show_message "[1/7] Mono installed."
 else
     show_message "[1/7] Mono is already installed."
@@ -78,7 +91,8 @@ fi
 
 
 # Install Python in Wine if not present
-if ! $wine_executable python --version 2>/dev/null; then
+# (check the file: under Box64 "wine python --version" can exit non-zero even when it works)
+if [ ! -e "$wine_python_exe" ]; then
     show_message "[5/7] Installing Python in Wine..."
     curl -L $python_url -o /tmp/python-installer.exe
     $wine_executable /tmp/python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
@@ -98,8 +112,8 @@ if ! is_wine_python_package_installed "MetaTrader5==$metatrader_version"; then
 fi
 # Install mt5linux library in Windows if not installed
 show_message "[6/7] Checking and installing mt5linux library in Windows if necessary"
-if ! is_wine_python_package_installed "mt5linux"; then
-    $wine_executable python -m pip install --no-cache-dir "mt5linux>=0.1.9"
+if ! is_wine_python_package_installed "mt5linux==$mt5linux_version"; then
+    $wine_executable python -m pip install --no-cache-dir "mt5linux==$mt5linux_version"
 fi
 
 # Install python-dateutil if needed (datetime is built-in, but dateutil adds features)
@@ -110,8 +124,8 @@ fi
 
 # Install mt5linux library in Linux if not installed
 show_message "[6/7] Checking and installing mt5linux library in Linux if necessary"
-if ! is_python_package_installed "mt5linux"; then
-    pip install --break-system-packages --no-cache-dir --no-deps mt5linux && \
+if ! is_python_package_installed "mt5linux==$mt5linux_version"; then
+    pip install --break-system-packages --no-cache-dir --no-deps "mt5linux==$mt5linux_version" && \
     pip install --break-system-packages --no-cache-dir rpyc plumbum numpy
 fi
 
@@ -125,8 +139,11 @@ fi
 show_message "[7/7] Starting the mt5linux server..."
 python3 -m mt5linux --host 0.0.0.0 -p $mt5server_port -w $wine_executable python.exe &
 
-# Give the server some time to start
-sleep 5
+# Give the server some time to start (slower under emulation on ARM64)
+for _ in $(seq 1 60); do
+    ss -tuln | grep -q ":$mt5server_port" && break
+    sleep 2
+done
 
 # Check if the server is running
 if ss -tuln | grep ":$mt5server_port" > /dev/null; then
