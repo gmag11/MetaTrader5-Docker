@@ -1,4 +1,5 @@
 
 .devcontainer/
-.env
 config/
+config.bat
+node_modules
