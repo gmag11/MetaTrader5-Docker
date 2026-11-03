@@ -135,6 +135,15 @@ Start your browser pointing `http://<your ip address>:3000`
 
 On first run it may take a few minutes to get everything installed and running. Normally it takes less than 5 minutes. You don't need to do anything. All installation process is automatic and you should end up with MetaTrader5 running in your web session.
 
+## Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform. MetaTrader5 has a one-click deployment template there, as an alternative to the manual docker-compose setup above:
+
+[![Deploy on Easypanel][easypanel-btn]][easypanel-deploy]
+
+[easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
+[easypanel-deploy]: https://easypanel.io/templates/metatrader5
+
 ## Where to place MQ5 and EX5 files
 
 In the case you want to run your own MQL5 bots inside the container you can find MQL5 folder structure in
